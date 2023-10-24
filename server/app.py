@@ -1,4 +1,4 @@
-from flask import Flask, request, make_response, jsonify
+from flask import Flask, request, jsonify
 from flask_cors import CORS
 from flask_migrate import Migrate
 
@@ -17,13 +17,11 @@ db.init_app(app)
 @app.route('/messages', methods=['GET', 'POST'])
 def messages():
     if request.method == 'GET':
-        messages = Message.query.all()
+        messages = Message.query.order_by(Message.created_at.asc()).all()
         messages_serialized = [message.to_dict() for message in messages]
 
-        response = make_response(
-            messages_serialized,
-            200
-        )
+        response = jsonify(messages_serialized)
+        response.status_code = 200
 
         return response
     elif request.method == 'POST':
@@ -38,13 +36,10 @@ def messages():
 
         message_dict = new_message.to_dict()
 
-        response = make_response(
-            message_dict,
-            201
-        )
+        response = jsonify(message_dict)
+        response.status_code = 201
 
         return response
-
 
 @app.route('/messages/<int:id>', methods=['GET', 'PATCH', 'DELETE'])
 def messages_by_id(id):
@@ -52,26 +47,20 @@ def messages_by_id(id):
     if request.method == 'GET':
         message_serialized = message.to_dict()
 
-        response = make_response(
-            message_serialized,
-            200
-        )
+        response = jsonify(message_serialized)
+        response.status_code = 200
+
         return response
     
     elif request.method == 'PATCH':
-        message = Message.query.filter(Message.id == id).first()
-
         message.body = request.get_json().get("body")
 
-        db.session.add(message)
         db.session.commit()
 
         message_dict = message.to_dict()
 
-        response = make_response(
-            message_dict,
-            200
-        )
+        response = jsonify(message_dict)
+        response.status_code = 200
 
         return response
     
@@ -84,13 +73,10 @@ def messages_by_id(id):
             "message": "Message deleted."    
         }
 
-        response = make_response(
-            response_body,
-            200
-        )
+        response = jsonify(response_body)
+        response.status_code = 200
 
         return response
 
-if __name__ == '__main__':
+if __name__ == '__main':
     app.run(port=5555)
-    
